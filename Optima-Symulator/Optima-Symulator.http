@@ -1,0 +1,6 @@
+@Optima_Symulator_HostAddress = http://localhost:5093
+
+GET {{Optima_Symulator_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

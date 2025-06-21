@@ -1,0 +1,51 @@
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using Optima_Symulator.Models.Settings;
+using System.Text;
+
+namespace Optima_Symulator.Configurations;
+
+public static class JwtAuthenticationExtension
+{
+    public static IServiceCollection AddJwtAuthentication(this IServiceCollection services, IConfiguration configuration)
+    {
+        var jsonSettings = configuration
+            .GetSection("JsonSettings")
+            .Get<JsonSetting>();
+
+        var key = Encoding.ASCII.GetBytes(jsonSettings!.JwtKey);
+
+        services.AddAuthentication(options =>
+        {
+            options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+            options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+        })
+        .AddJwtBearer(options =>
+        {
+            options.RequireHttpsMetadata = false;
+            options.SaveToken = true;
+            options.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = false,
+                ValidateAudience = false,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new SymmetricSecurityKey(key)
+            };
+            options.Events = new JwtBearerEvents
+            {
+                OnMessageReceived = context =>
+                {
+                    var token = context.Request.Headers["Authorization"].FirstOrDefault();
+                    if (!string.IsNullOrEmpty(token) && token.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+                    {
+                        context.Token = token.Substring("Bearer ".Length).Trim();
+                    }
+                    return Task.CompletedTask;
+                }
+            };
+        });
+
+        return services;
+    }
+}
