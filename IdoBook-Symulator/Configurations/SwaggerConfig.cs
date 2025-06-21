@@ -15,7 +15,6 @@ public static class SwaggerConfig
                 Description = "Documentation"
             });
 
-            // 🔐 JWT Bearer Authorization support
             swagger.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
             {
                 Name = "Authorization",

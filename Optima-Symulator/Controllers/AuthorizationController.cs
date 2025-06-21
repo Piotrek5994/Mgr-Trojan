@@ -1,11 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Optima_Symulator.Services.Interfaces;
+﻿using Optima_Symulator.Services.Interfaces;
 
 namespace Optima_Symulator.Controllers;
 
-[Route("api/[controller]")]
-[ApiController]
-public class AuthorizationController : ControllerBase
+public class AuthorizationController : BaseController
 {
     private readonly IAuthorizationService _authorizationService;
 
