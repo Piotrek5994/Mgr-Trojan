@@ -13,12 +13,16 @@ public class AuthorizationController : BaseController
     }
 
     [HttpPost]
+    [Route("Get")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetToken()
     {
         return Ok();
     }
     [HttpPut]
-    public async Task<IActionResult> RefresToken()
+    [Route("Refres")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> RefresToken(string token)
     {
         return Ok();
     }
