@@ -1,33 +1,32 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace IdoBook_Symulator.Controllers
+namespace IdoBook_Symulator.Controllers;
+
+[Authorize]
+[ApiController]
+[Route("api/[controller]")]
+public class BaseController : ControllerBase
 {
-    [Authorize]
-    [ApiController]
-    [Route("api/[controller]")]
-    public class BaseController : ControllerBase
+    [NonAction]
+    protected string GetNotFoundMessage(string methodName)
+        => $"No data found while executing {methodName}";
+
+    [NonAction]
+    protected string GetBadRequestMessage(string methodName)
+        => $"Error during execution {methodName}";
+
+    [NonAction]
+    protected string GetUnauthorizedMessage(string methodName)
+        => $"Unauthorized access attempt in {methodName}";
+
+    public class TokenResponse
     {
-        [NonAction]
-        protected string GetNotFoundMessage(string methodName)
-            => $"No data found while executing {methodName}";
+        public string Token { get; set; } = string.Empty;
+    }
 
-        [NonAction]
-        protected string GetBadRequestMessage(string methodName)
-            => $"Error during execution {methodName}";
-
-        [NonAction]
-        protected string GetUnauthorizedMessage(string methodName)
-            => $"Unauthorized access attempt in {methodName}";
-
-        public class TokenResponse
-        {
-            public string Token { get; set; } = string.Empty;
-        }
-
-        public class ErrorResponse
-        {
-            public string Error { get; set; } = string.Empty;
-        }
+    public class ErrorResponse
+    {
+        public string Error { get; set; } = string.Empty;
     }
 }
