@@ -12,18 +12,41 @@ public class AuthorizationController : BaseController
         _authorizationService = authorizationService;
     }
 
-    [HttpPost]
-    [Route("Get")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetToken()
+    /// <summary>
+    /// Generates a JWT token for a given login and password.
+    /// </summary>
+    [HttpPost("Get")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(TokenResponse))]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(ErrorResponse))]
+    public IActionResult GetToken([FromQuery] string login, string password)
     {
-        return Ok();
+        try
+        {
+            var token = _authorizationService.GenerateToken(login, password);
+            return Ok(new TokenResponse { Token = token });
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Unauthorized(new ErrorResponse { Error = GetUnauthorizedMessage(nameof(GetToken)) });
+        }
     }
-    [HttpPut]
-    [Route("Refres")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<IActionResult> RefresToken(string token)
+
+    /// <summary>
+    /// Refreshes a JWT token if it's still valid.
+    /// </summary>
+    [HttpPut("Refres")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(TokenResponse))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+    public IActionResult RefresToken([FromQuery] string token)
     {
-        return Ok();
+        try
+        {
+            var newToken = _authorizationService.RefreshToken(token);
+            return Ok(new TokenResponse { Token = newToken });
+        }
+        catch (Exception)
+        {
+            return BadRequest(new ErrorResponse { Error = GetBadRequestMessage(nameof(RefresToken)) });
+        }
     }
 }
