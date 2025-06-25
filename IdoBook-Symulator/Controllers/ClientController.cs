@@ -1,9 +1,11 @@
 ﻿using IdoBook_Symulator.Models.Client;
 using IdoBook_Symulator.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace IdoBook_Symulator.Controllers;
 
+[Authorize]
 public class ClientController : BaseController
 {
     private readonly IClientService _clientService;
@@ -19,9 +21,9 @@ public class ClientController : BaseController
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> GetClientAsync([FromQuery] int clientId)
+    public async Task<IActionResult> GetClientAsync([FromQuery] int? clientId)
     {
-        if (clientId <= 0)
+        if (clientId <= 0 && clientId is not null)
             return BadRequest("clientId must be greater than zero.");
 
         var client = _clientService.GetClients(clientId);

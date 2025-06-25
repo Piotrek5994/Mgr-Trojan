@@ -47,15 +47,12 @@ public static class SwaggerConfig
 
     public static void UseSwaggerUI(WebApplication app)
     {
-        if (app.Environment.IsDevelopment())
+        app.UseSwagger();
+        app.UseSwaggerUI(c =>
         {
-            app.UseSwagger();
-            app.UseSwaggerUI(c =>
-            {
-                c.SwaggerEndpoint("/swagger/v1/swagger.json", "IdoBook-Simulator v1");
-                c.DisplayOperationId();
-            });
-        }
+            c.SwaggerEndpoint("/swagger/v1/swagger.json", "IdoBook-Simulator v1");
+            c.DisplayOperationId();
+        });
     }
 
     public static void DeclareSwaggerSchema(SwaggerGenOptions swagger)

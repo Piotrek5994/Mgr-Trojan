@@ -1,11 +1,8 @@
 ﻿using IdoBook_Symulator.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
-using static IdoBook_Symulator.Controllers.BaseController;
 
 namespace IdoBook_Symulator.Controllers;
 
-[ApiController]
-[Route("api/[controller]")]
 public class AuthorizationController : BaseController
 {
     private readonly IAuthorizationService _authorizationService;

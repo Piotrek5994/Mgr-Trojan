@@ -1,5 +1,4 @@
-﻿using IdoBook_Symulator.Helpers;
-using IdoBook_Symulator.Models.Settings;
+﻿using IdoBook_Symulator.Models.Settings;
 using IdoBook_Symulator.Services.Interfaces;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -7,89 +6,88 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 
-namespace IdoBook_Symulator.Services;
-
-public class AuthorizationService : IAuthorizationService
+namespace IdoBook_Symulator.Services
 {
-    private readonly JsonSetting _settings;
-    private readonly byte[] _secretKey;
-
-    public AuthorizationService(IOptions<JsonSetting> jsonSetting)
+    public class AuthorizationService : IAuthorizationService
     {
-        _settings = jsonSetting.Value;
-        _secretKey = Encoding.UTF8.GetBytes(_settings.JwtKey);
-    }
+        private readonly JsonSetting _settings;
+        private readonly byte[] _secretKey;
 
-    public string GenerateToken(string login, string password)
-    {
-        if (login != "Tomasz" || password != "Trojan")
-            throw new UnauthorizedAccessException("Invalid login or password.");
-
-        var email = $"{login.ToLower()}@example.com";
-        return CreateToken(login, email);
-    }
-
-    public string RefreshToken(string encryptedToken)
-    {
-        var tokenHandler = new JwtSecurityTokenHandler();
-
-        try
+        public AuthorizationService(IOptions<JsonSetting> jsonSetting)
         {
-            var decryptedToken = SecurityHelper.Decrypt(encryptedToken, _secretKey);
+            _settings = jsonSetting.Value;
+            _secretKey = Encoding.UTF8.GetBytes(_settings.JwtKey);
+        }
 
-            var principal = tokenHandler.ValidateToken(decryptedToken, new TokenValidationParameters
-            {
-                ValidateIssuer = true,
-                ValidateAudience = true,
-                ValidateIssuerSigningKey = true,
-                ValidateLifetime = true,
-                ClockSkew = TimeSpan.Zero,
-                ValidIssuer = _settings.Issuer,
-                ValidAudience = _settings.Audience,
-                IssuerSigningKey = new SymmetricSecurityKey(_secretKey)
-            }, out _);
+        public string GenerateToken(string login, string password)
+        {
+            if (login != "Tomasz" || password != "Trojan")
+                throw new UnauthorizedAccessException("Invalid login or password.");
 
-            var login = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            var email = principal.FindFirst(ClaimTypes.Email)?.Value;
-
-            if (string.IsNullOrEmpty(login) || string.IsNullOrEmpty(email))
-                throw new SecurityTokenException("Invalid token claims.");
-
+            var email = $"{login.ToLower()}@example.com";
             return CreateToken(login, email);
         }
-        catch (SecurityTokenExpiredException)
+
+        public string RefreshToken(string token)
         {
-            throw new SecurityTokenException("Token has expired. Please login again.");
+            var tokenHandler = new JwtSecurityTokenHandler();
+
+            try
+            {
+                var principal = tokenHandler.ValidateToken(token, new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateIssuerSigningKey = true,
+                    ValidateLifetime = true,
+                    ClockSkew = TimeSpan.Zero,
+                    ValidIssuer = _settings.Issuer,
+                    ValidAudience = _settings.Audience,
+                    IssuerSigningKey = new SymmetricSecurityKey(_secretKey)
+                }, out _);
+
+                var login = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                var email = principal.FindFirst(ClaimTypes.Email)?.Value;
+
+                if (string.IsNullOrEmpty(login) || string.IsNullOrEmpty(email))
+                    throw new SecurityTokenException("Invalid token claims.");
+
+                return CreateToken(login, email);
+            }
+            catch (SecurityTokenExpiredException)
+            {
+                throw new SecurityTokenException("Token has expired. Please login again.");
+            }
+            catch (Exception)
+            {
+                throw new SecurityTokenException("Invalid or malformed token.");
+            }
         }
-        catch (Exception)
+
+        private string CreateToken(string login, string email)
         {
-            throw new SecurityTokenException("Invalid or malformed token.");
+            var claims = new[]
+            {
+                new Claim(ClaimTypes.NameIdentifier, login),
+                new Claim(ClaimTypes.Email, email)
+            };
+
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(claims),
+                Expires = DateTime.UtcNow.AddHours(_settings.TokenExpirationHours),
+                SigningCredentials = new SigningCredentials(
+                    new SymmetricSecurityKey(_secretKey),
+                    SecurityAlgorithms.HmacSha256Signature),
+                Issuer = _settings.Issuer,
+                Audience = _settings.Audience 
+            };
+
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var token = tokenHandler.CreateToken(tokenDescriptor);
+            var jwt = tokenHandler.WriteToken(token);
+
+            return jwt; 
         }
-    }
-
-    private string CreateToken(string login, string email)
-    {
-        var claims = new[]
-        {
-            new Claim(ClaimTypes.NameIdentifier, login),
-            new Claim(ClaimTypes.Email, email)
-        };
-
-        var tokenDescriptor = new SecurityTokenDescriptor
-        {
-            Subject = new ClaimsIdentity(claims),
-            Expires = DateTime.UtcNow.AddHours(_settings.TokenExpirationHours),
-            SigningCredentials = new SigningCredentials(
-                new SymmetricSecurityKey(_secretKey),
-                SecurityAlgorithms.HmacSha256Signature),
-            Issuer = _settings.Issuer,
-            Audience = _settings.Audience
-        };
-
-        var tokenHandler = new JwtSecurityTokenHandler();
-        var token = tokenHandler.CreateToken(tokenDescriptor);
-        var jwt = tokenHandler.WriteToken(token);
-
-        return SecurityHelper.Encrypt(jwt, _secretKey);
     }
 }
