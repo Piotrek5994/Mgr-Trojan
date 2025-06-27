@@ -15,7 +15,7 @@ public class ClientService : IClientService
     }
 
     private List<ClientInformation> _sampleClients = new List<ClientInformation>
-        {
+    {
             new ()
             {
                 ClientId = 1,
@@ -79,6 +79,5 @@ public class ClientService : IClientService
                     }
                 }
             }
-        };
-
+    };
 }
