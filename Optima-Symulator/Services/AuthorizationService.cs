@@ -1,6 +1,5 @@
 ﻿using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using Optima_Symulator.Helpers;
 using Optima_Symulator.Models.Settings;
 using Optima_Symulator.Services.Interfaces;
 using System.IdentityModel.Tokens.Jwt;
@@ -29,15 +28,13 @@ public class AuthorizationService : IAuthorizationService
         return CreateToken(login, email);
     }
 
-    public string RefreshToken(string encryptedToken)
+    public string RefreshToken(string token)
     {
         var tokenHandler = new JwtSecurityTokenHandler();
 
         try
         {
-            var decryptedToken = SecurityHelper.Decrypt(encryptedToken, _secretKey);
-
-            var principal = tokenHandler.ValidateToken(decryptedToken, new TokenValidationParameters
+            var principal = tokenHandler.ValidateToken(token, new TokenValidationParameters
             {
                 ValidateIssuer = true,
                 ValidateAudience = true,
@@ -71,9 +68,9 @@ public class AuthorizationService : IAuthorizationService
     {
         var claims = new[]
         {
-            new Claim(ClaimTypes.NameIdentifier, login),
-            new Claim(ClaimTypes.Email, email)
-        };
+                new Claim(ClaimTypes.NameIdentifier, login),
+                new Claim(ClaimTypes.Email, email)
+            };
 
         var tokenDescriptor = new SecurityTokenDescriptor
         {
@@ -90,6 +87,6 @@ public class AuthorizationService : IAuthorizationService
         var token = tokenHandler.CreateToken(tokenDescriptor);
         var jwt = tokenHandler.WriteToken(token);
 
-        return SecurityHelper.Encrypt(jwt, _secretKey);
+        return jwt;
     }
 }

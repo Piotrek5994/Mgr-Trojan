@@ -32,14 +32,20 @@ public static class JwtAuthenticationExtension
                 ValidateIssuerSigningKey = true,
                 IssuerSigningKey = new SymmetricSecurityKey(key)
             };
+
             options.Events = new JwtBearerEvents
             {
                 OnMessageReceived = context =>
                 {
                     var token = context.Request.Headers["Authorization"].FirstOrDefault();
-                    if (!string.IsNullOrEmpty(token) && token.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+
+                    if (!string.IsNullOrEmpty(token))
                     {
-                        context.Token = token.Substring("Bearer ".Length).Trim();
+                        if (token.StartsWith("Bearer "))
+                        {
+                            token = token.Substring("Bearer ".Length);
+                        }
+                        context.Token = token;
                     }
                     return Task.CompletedTask;
                 }
